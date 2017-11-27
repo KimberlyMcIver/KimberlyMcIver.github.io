@@ -293,13 +293,13 @@ ul li {
 	$Banner
 ========================================================================== */
 .banner {
-	background-image: url(../images/banner.jpg);
-	background-position: center top;
+	background-image: url(../images/kim2.JPG);
+	background-position: left top;
 	background-repeat: no-repeat;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-	-webkit-background-size: cover;
-	background-size: cover;
+	-moz-background-size: contain;
+	-o-background-size: contain;
+	-webkit-background-size: contain;
+	background-size: contain;
 	min-height: 750px;
 }
 .banner-inner-wrapper {
