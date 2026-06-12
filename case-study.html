@@ -1,0 +1,203 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LabTrace — Case Study · Kimberly McIver</title>
+<meta name="description" content="LabTrace — an AI-powered personal lab record. Claude-powered extraction, LOINC/UCUM normalization, human-in-the-loop review, and eval-gated quality. A case study.">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#1b1b1b",
+                        "outline": "#8e9192",
+                        "on-surface-variant": "#c4c7c8",
+                        "background": "#131313",
+                        "surface": "#131313",
+                        "on-surface": "#e2e2e2",
+                        "primary": "#ffffff"
+                    },
+                    "spacing": {
+                        "nav-padding": "10px",
+                        "element-gap": "20px",
+                        "grid-margin": "40px",
+                        "base-unit": "10px",
+                        "section-gap": "160px",
+                        "footer-padding": "10px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+  html { scroll-behavior: smooth; }
+  /* Restored type scale — matches index.html */
+  .display-xl { font-size: clamp(2.25rem, 7vw, 6.5rem); line-height: 0.92; letter-spacing: -0.04em; font-weight: 800; }
+  .display-lg { font-size: clamp(1.75rem, 4.5vw, 3.5rem); line-height: 0.95; letter-spacing: -0.03em; font-weight: 700; }
+  .headline-md { font-size: clamp(1.1rem, 2vw, 1.5rem); line-height: 1.1; letter-spacing: -0.01em; font-weight: 600; }
+</style>
+</head>
+<body class="bg-black text-white antialiased min-h-screen flex flex-col font-['Inter'] text-[12px] uppercase">
+
+<!-- TopNavBar -->
+<nav class="fixed z-50 w-full top-0 flex justify-between items-center pb-6 transition-colors duration-150 px-[10px] pt-[10px] text-white bg-black">
+<a class="font-semibold tracking-tight text-[12px] font-['Inter'] uppercase hover:opacity-70 transition-opacity duration-150" href="index.html">
+            KIMBERLY McIVER
+        </a>
+<div class="hidden md:flex items-center absolute left-1/2 -translate-x-1/2 gap-6">
+<a class="font-['Inter'] text-[12px] uppercase font-semibold tracking-[0.1em] transition-opacity duration-150 hover:opacity-70" href="index.html#work">WORK</a>
+<a class="font-['Inter'] text-[12px] uppercase font-semibold tracking-[0.1em] hover:opacity-70 transition-opacity duration-150" href="index.html#about">ABOUT</a>
+<a class="font-['Inter'] text-[12px] uppercase font-semibold tracking-[0.1em] hover:opacity-70 transition-opacity duration-150" href="index.html#experience">EXPERIENCE</a>
+<a class="font-['Inter'] text-[12px] uppercase font-semibold tracking-[0.1em] hover:opacity-70 transition-opacity duration-150" href="index.html#contact">CONTACT</a>
+</div>
+<a class="font-['Inter'] hover:opacity-70 transition-opacity duration-150 flex items-center gap-1 text-[12px] uppercase tracking-[0.2em] font-semibold" href="mailto:kimberlyrmciver@gmail.com">
+            GET IN TOUCH <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</a>
+</nav>
+
+<!-- Main Content -->
+<main class="flex-grow pt-[160px] pb-section-gap px-grid-margin md:px-[80px] max-w-[1100px] mx-auto w-full">
+
+<!-- Back link -->
+<a class="inline-flex items-center gap-1 text-[12px] uppercase tracking-[0.2em] text-white/50 hover:text-white transition-colors duration-150 mb-12" href="index.html">
+<span class="material-symbols-outlined text-[12px]">arrow_back</span> Back to Work
+</a>
+
+<!-- HERO -->
+<section class="mb-section-gap border-b border-white/10 pb-16">
+<h1 class="font-['Inter'] display-lg text-white uppercase mb-6">LabTrace</h1>
+<p class="font-['Inter'] text-[12px] normal-case italic text-on-surface-variant mb-element-gap">The labs you already have, finally legible.</p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed max-w-2xl mb-element-gap">
+            An AI-powered personal lab record: upload any lab report from any provider, and a Claude-powered pipeline extracts every value, normalizes it to healthcare standards, and trends it over time against optimal ranges you define — then hands your doctor a one-page summary they can read in under a minute.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed max-w-2xl">
+            Status: <span class="text-white font-semibold">In active development — shipping to TestFlight.</span> Built solo with Claude Code. This page documents the working system and the engineering decisions behind it.
+        </p>
+</section>
+
+<!-- THE PROBLEM -->
+<section class="mb-section-gap">
+<div class="text-[12px] tracking-[0.2em] font-semibold text-white/50 mb-12 border-b border-white/10 pb-4">THE PROBLEM</div>
+<div class="flex flex-col gap-6 max-w-2xl">
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            I'm user zero. My lab history lives in six places: Quest, Labcorp, a consumer testing service, a retail clinic, a university health system, and a hospital dermatology department — plus continuous biometrics from an Oura ring. No portal talks to any other. Seeing my ferritin trend across two years means opening six tabs and a spreadsheet I maintain by hand. Every new provider visit starts with me verbally reconstructing my own medical history.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            This isn't a niche problem. Patients re-test what they've already tested. Clinicians decide on partial pictures. And the people hit hardest are the ones who already struggle to be taken seriously in an exam room — showing up with clean, objective, longitudinal data changes that conversation. The integration burden shouldn't fall on the patient. Today it does, so most people give up.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            The blocker was never ambition — it was data entry. Lab reports come in thousands of formats. Rule-based extraction never generalized. That just changed.
+        </p>
+</div>
+</section>
+
+<!-- THE SYSTEM -->
+<section class="mb-section-gap">
+<div class="text-[12px] tracking-[0.2em] font-semibold text-white/50 mb-12 border-b border-white/10 pb-4">THE SYSTEM</div>
+<p class="font-['Inter'] headline-md text-white uppercase mb-12 max-w-2xl">Pipeline: document → structured record → trend → provider one-sheet</p>
+<ol class="flex flex-col gap-6 max-w-2xl mb-12">
+<li class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed"><span class="text-white font-semibold">1. Ingest.</span> Upload a PDF or photograph of any lab report. Any provider, any format, any angle.</li>
+<li class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed"><span class="text-white font-semibold">2. Extract (Claude).</span> The document goes to Claude under a strict structured-output schema: analyte, value, unit, printed reference range, collection date, source — extraction is verbatim-only, with a confidence rating per field. Output is validated against the schema before anything proceeds.</li>
+<li class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed"><span class="text-white font-semibold">3. Normalize.</span> Analytes map to LOINC codes (the universal lab-test vocabulary); units normalize via UCUM. A "ferritin" from Quest and a "FERRITIN, SERUM" from Labcorp become the same observation — which is what makes cross-source trending possible at all.</li>
+<li class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed"><span class="text-white font-semibold">4. Human-in-the-loop review.</span> Nothing saves silently. High-confidence fields pre-accept for one-tap confirmation; low-confidence fields are flagged for explicit review against the source image. In health data, wrong is worse than missing — the review step is a product requirement, not a UX nicety.</li>
+<li class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed"><span class="text-white font-semibold">5. Trend.</span> Every biomarker charts across all sources over time, color-coded against optimal ranges the user sets — because the targets that matter are the ones your own clinician gave you, not the population reference range printed on the report.</li>
+<li class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed"><span class="text-white font-semibold">6. Share.</span> A one-page provider summary — selected biomarkers, selected date range — designed to be scanned by a clinician in under sixty seconds. The export ends in a doctor's hand, not on your phone.</li>
+</ol>
+<div class="flex flex-wrap gap-3 font-['Inter'] text-[12px] tracking-[0.1em] text-white/50 border-t border-white/10 pt-8">
+<span>PYTHON/FASTAPI</span><span>·</span><span>CLAUDE API</span><span>·</span><span>REACT NATIVE (iOS)</span><span>·</span><span>SUPABASE/POSTGRES</span><span>·</span><span>LOINC/UCUM</span><span>·</span><span>GOOGLE STITCH</span><span>·</span><span>CLAUDE CODE</span>
+</div>
+</section>
+
+<!-- EVALS -->
+<section class="mb-section-gap">
+<div class="text-[12px] tracking-[0.2em] font-semibold text-white/50 mb-12 border-b border-white/10 pb-4">THE PART MOST AI APPS SKIP: EVALS</div>
+<div class="flex flex-col gap-6 max-w-2xl">
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            An AI product without measurement is a demo. LabTrace's launch is gated on a hand-labeled evaluation set of real lab documents, held out from prompt iteration, measuring field-level accuracy for values, units, dates, and analyte identification.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            The gate isn't just headline accuracy — it's <span class="text-white font-semibold">calibration</span>. The entire human-review mechanism depends on one assumption: when the model says it's unsure, it should actually be more likely to be wrong. So calibration is itself a launch blocker. If user corrections don't concentrate on the fields the model flagged as low-confidence, the routing is unsound and the product doesn't ship — regardless of how good the accuracy number looks.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            In production, the same instrumentation continues: correction rates, confidence-distribution drift, per-format accuracy. Lab formats change; model behavior gets monitored, not assumed.
+        </p>
+</div>
+</section>
+
+<!-- WHAT THE PRODUCT DELIBERATELY DOESN'T DO -->
+<section class="mb-section-gap">
+<div class="text-[12px] tracking-[0.2em] font-semibold text-white/50 mb-12 border-b border-white/10 pb-4">WHAT THE PRODUCT DELIBERATELY DOESN'T DO</div>
+<div class="flex flex-col gap-6 max-w-2xl">
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            LabTrace does not diagnose. It does not recommend supplements or interventions. It does not suggest target ranges based on conditions. Users set their own ranges — typically the ones their own clinicians gave them.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            These aren't missing features; they're gates. Condition-based recommendations move from "displaying your data" toward FDA clinical-decision-support territory, on a scientific evidence base that is genuinely contested. Those features stay on the roadmap behind explicit evidence and regulatory review — because in health software, the features you refuse to ship without proof are as much a part of the product as the ones you do.
+        </p>
+</div>
+</section>
+
+<!-- THE ENTERPRISE TRACK -->
+<section class="mb-section-gap">
+<div class="text-[12px] tracking-[0.2em] font-semibold text-white/50 mb-12 border-b border-white/10 pb-4">THE ENTERPRISE TRACK</div>
+<div class="flex flex-col gap-6 max-w-2xl">
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            The same pipeline solves an enterprise problem: health systems receive patient-generated and outside lab data as unstructured documents that die as scanned images in the EHR. I've designed (and am building against Epic's public FHIR sandbox) a deployment architecture for exactly this — Claude extraction → LOINC/UCUM normalization → clinician verification queue → FHIR R4 Observations written to the EHR with full provenance, plus an AI-generated longitudinal summary at the point of care, with extraction-accuracy and verification-time metrics instrumented from day one.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            Modeled on a healthcare enterprise client I supported during my consulting days, it's a working demonstration of the pattern I find most interesting in applied AI: putting a frontier model at the messy, unstructured boundary of an entrenched system — and meeting that system on its own standards rather than around them.
+        </p>
+</div>
+</section>
+
+<!-- STATUS & WHAT'S NEXT -->
+<section class="mb-section-gap">
+<div class="text-[12px] tracking-[0.2em] font-semibold text-white/50 mb-12 border-b border-white/10 pb-4">STATUS &amp; WHAT'S NEXT</div>
+<div class="flex flex-col gap-6 max-w-2xl">
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+<span class="text-white font-semibold">Working today:</span> Claude extraction pipeline with schema validation and confidence routing · eval set with ground-truth labeling · LOINC/UCUM normalization · FastAPI backend.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+<span class="text-white font-semibold">In progress this month:</span> iOS app (trends, custom ranges, review UX, provider one-sheet) · TestFlight release · FHIR sandbox demo.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+<span class="text-white font-semibold">Gated on evidence + regulatory review:</span> condition-based range presets, intervention recommendations.
+        </p>
+<p class="font-['Inter'] text-[12px] normal-case text-on-surface-variant leading-relaxed">
+            Built in public, fast, with the safety decisions documented as deliberately as the features.
+        </p>
+</div>
+</section>
+
+<!-- Contact / signoff -->
+<section class="mb-[80px] text-center">
+<h2 class="font-['Inter'] display-xl text-white uppercase mb-12">Let's build.</h2>
+<a class="inline-block bg-white text-black font-['Inter'] text-[12px] uppercase px-6 py-4 hover:bg-black hover:text-white border border-white transition-colors duration-300" href="mailto:kimberlyrmciver@gmail.com">
+            kimberlyrmciver@gmail.com
+        </a>
+</section>
+
+</main>
+
+<!-- Footer -->
+<footer class="w-full pb-[10px] px-[10px] bg-black border-t border-white/10 flex flex-col md:flex-row justify-between items-end gap-4 mt-auto pt-6">
+<a class="text-[12px] font-bold text-white font-['Inter'] uppercase hover:opacity-70 transition-opacity duration-150" href="index.html">
+            KIMBERLY McIVER
+        </a>
+<div class="flex gap-4 font-['Inter'] text-[12px] tracking-[0.2em] font-medium uppercase">
+<a class="text-white/50 hover:text-white hover:underline underline-offset-4 transition-all duration-300" href="https://www.linkedin.com/in/kimberlymciver/">LINKEDIN</a>
+<a class="text-white/50 hover:text-white hover:underline underline-offset-4 transition-all duration-300" href="https://github.com/KimberlyMcIver">GITHUB</a>
+<a class="text-white/50 hover:text-white hover:underline underline-offset-4 transition-all duration-300" href="https://substack.com/@kimberlyrosemciver">SUBSTACK</a>
+<a class="text-white/50 hover:text-white hover:underline underline-offset-4 transition-all duration-300" href="mailto:kimberlyrmciver@gmail.com">EMAIL</a>
+</div>
+<div class="text-white/50 font-['Inter'] text-[12px] tracking-[0.2em] font-medium uppercase">
+            © KIMBERLY McIVER MMXXVI
+        </div>
+</footer>
+
+</body></html>
